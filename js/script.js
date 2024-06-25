@@ -15,9 +15,33 @@ const messageForGuesses = document.querySelector(".message");
 /* Used to target the hidden play again button HTML element */
 const playAgainButton = document.querySelector(".play-again hide");
 
-const word = "magnolia"; /* Initial Guess game word to start game */
+let word = "magnolia"; /* Initial Guess game word to start game AND since its value will need to be changed/reassigned, this variable needed to be a "let" instead of "const" */
 
 const letterGuesses = []; /* Variable to represent the letters guessed by the player in the form of an array; different than the 'guessedLetters" variable */
+
+/* Variable to display the player's number of guesses left/remaining */
+let guessesLeft = 8; /* Used "let" insteaed of "const" since the guessLeft value will change depeding on if the correct letter is guessed or not via the "countGuesses" function */
+
+const getword = async function(){
+    const wordRequest = await fetch("https://gist.githubusercontent.com/skillcrush-curriculum/7061f1d4d3d5bfe47efbfbcfe42bf57e/raw/5ffc447694486e7dea686f34a6c085ae371b43fe/words.txt");
+    const data = await wordRequest.text();
+    console.log(data);
+
+    const newWordArray = data.split("\n");
+    console.log(newWordArray);
+
+    const randomWordIndex = Math.floor(Math.random() * newWordArray.length);
+    const randomWord = newWordArray[randomWordIndex];
+    console.log(randomWord);
+
+    const newWord = randomWord.trim();
+    word = newWord;
+
+    placeholders(newWord);
+};
+
+getword();
+
 
 /* Writing a function to add placehodlers in place of letters for words being guessed */
 const placeholders = function (word){
@@ -29,7 +53,7 @@ const placeholders = function (word){
     guessInProgress.innerText = words.join("");
 };
 
-placeholders(word);
+getword();
 
 /* Adds an event listener to target the "Guess button" and accept text input for guessing letters */
 guessButton.addEventListener("click", function(e){
@@ -71,6 +95,7 @@ const makeGuess = function (letter){
     } else {
         letterGuesses.push(letter); /* Adds the letter guessed to the letterGuess array */
         playerGuesses(); /* Used to update the "guessedLetters" unordered list by adding newly created list items (li) to the unordered list every time a letter is guessed */
+        countGuesses(letter); /* Used to update the remaining number of guesses the player has */
         updateWord(letterGuesses); /* Used to update the letters of the word being guessed (if the letter matches a letter in the word being guessed) so they display if correctly guessed */
         console.log(letterGuesses);
     }
@@ -102,10 +127,35 @@ const updateWord = function (letterGuesses){
     }
     guessInProgress.innerText = newArray.join(""); 
 
-    gameWon(wordUpper); /* Used "wordUpper" as a parameter when calling the function, to carry over the vaule from the "gameWon" function after passing the "wordUpper" variable as an arguement/value in the "gameWon" function in order to access the data from the updateWord function since the updateWord function and gameWon function aren't in the same scope */
+    gameWon(wordUpper); /* Used "wordUpper" as a parameter when calling the function, to carry over the vaule from the "gameWon" function after passing the "wordUpper" variable as an arguement/value in the "gameWon" function, which will allow the function to access the data from the updateWord function since the updateWord function and gameWon function aren't in the same scope */
 
 };
 
+/* Function to count the remaining guesses */
+const countGuesses =  function (input){
+    const upperWord = word.toUpperCase();
+    if (upperWord.includes(input)){
+        messageForGuesses.innerText = "You're correct, that letter is in the word!";
+        console.log("Letter guessed is contained in the mystery word");
+    } else {
+        messageForGuesses.innerText = "Sorry, letter guessed isn't part of the mystery word";
+        guessesLeft -= 1; /* Uses a Compound Assignment Operators via ( -=) */
+        console.log("Guess letter is not contained in the mystery word");
+    }
+
+    if (guessesLeft === 0){
+        messageForGuesses.innerText = "Sorry, but you are out of guesses. Please try playing again!";
+        spanRemainingGuesses.innerText = `You have ${guessesLeft} remaining!`; /* Used template Literal and ${} placeholder to access the "guessLeft" value and incorporate it into my temp literal */
+        console.log("Player has 0 guesses left");
+    } else if (guessesLeft === 1){
+        spanRemainingGuesses.innerText = `You have ${guessesLeft} remaining`;
+        console.log("Player has 1 guess left");
+    } else {
+        spanRemainingGuesses.innerText = `You have have ${guessesLeft}.`;
+    }
+};
+
+/* Function to check if the player has won the game */
 const gameWon = function (wordUpper){ /* Using wordUpper as a parameter, I can use the value of "wordUpper" from my updateWord function for my gameWon function -> this helps define "wordUpper" when used in the conditional statement (wordUpper === guessInProgress.innerText) */
    if (wordUpper === guessInProgress.innerText){ 
         messageForGuesses.classList.add("win"); 
@@ -115,4 +165,6 @@ const gameWon = function (wordUpper){ /* Using wordUpper as a parameter, I can u
         console.log("Keep guessing, you haven't won yet!")
     } 
 };
+
+
 
